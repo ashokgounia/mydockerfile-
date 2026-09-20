@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyBook — Ticket Booking</title>
+  <style>
+    :root {
+      --primary: #6d28d9;
+      --primary-dark: #4c1d95;
+      --accent: #f97316;
+      --ink: #172033;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --bg: #f4f6ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, #ddd6fe 0, transparent 35%),
+        radial-gradient(circle at bottom right, #fed7aa 0, transparent 30%),
+        var(--bg);
+    }
+
+    header {
+      padding: 22px 7%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+
+    .logo span { color: var(--accent); }
+
+    .tagline { color: var(--muted); font-size: 14px; }
+
+    main {
+      width: min(1100px, 90%);
+      margin: 18px auto 50px;
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 24px;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(255,255,255,.8);
+      border-radius: 22px;
+      box-shadow: 0 18px 45px rgba(76, 29, 149, .12);
+      padding: 30px;
+    }
+
+    h1 { margin: 0 0 8px; font-size: clamp(26px, 4vw, 40px); }
+    .subtitle { margin: 0 0 26px; color: var(--muted); }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .full { grid-column: 1 / -1; }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid var(--line);
+      outline: none;
+      border-radius: 10px;
+      background: white;
+      font-size: 15px;
+      transition: .2s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px #ede9fe;
+    }
+
+    .seat-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 28px 0 12px;
+    }
+
+    .seat-title small { color: var(--muted); }
+
+    .screen {
+      text-align: center;
+      color: white;
+      background: linear-gradient(90deg, #312e81, #7c3aed);
+      border-radius: 50% 50% 10px 10px;
+      padding: 9px;
+      font-size: 12px;
+      letter-spacing: 2px;
+      margin-bottom: 18px;
+    }
+
+    .seats {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 9px;
+    }
+
+    .seat {
+      aspect-ratio: 1;
+      border: 0;
+      border-radius: 8px 8px 4px 4px;
+      background: #dbeafe;
+      color: #2563eb;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform .15s, background .15s;
+    }
+
+    .seat:hover:not(.booked) { transform: translateY(-3px); }
+
+    .seat.selected {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 5px 12px #c4b5fd;
+    }
+
+    .seat.booked {
+      background: #e2e8f0;
+      color: #94a3b8;
+      cursor: not-allowed;
+      text-decoration: line-through;
+    }
+
+    .legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: middle;
+      background: #dbeafe;
+    }
+
+    .dot.selected { background: var(--primary); }
+    .dot.booked { background: #e2e8f0; }
+
+    .summary-title { margin-top: 0; }
+
+    .route {
+      margin: 22px 0;
+      padding: 18px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .city { font-size: 20px; font-weight: 800; }
+    .plane { color: var(--accent); font-size: 25px; }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      color: var(--muted);
+    }
+
+    .row strong { color: var(--ink); }
+
+    .total {
+      margin-top: 14px;
+      padding-top: 17px;
+      border-top: 1px dashed var(--line);
+      color: var(--ink);
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .book-btn {
+      width: 100%;
+      margin-top: 22px;
+      border: 0;
+      border-radius: 12px;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--primary), #9333ea);
+      color: white;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 10px 20px #ddd6fe;
+    }
+
+    .book-btn:hover { filter: brightness(1.07); }
+    .book-btn:disabled { cursor: not-allowed; opacity: .55; }
+
+    #confirmation {
+      display: none;
+      margin-top: 17px;
+      padding: 14px;
+      border-radius: 10px;
+      text-align: center;
+      color: #166534;
+      background: #dcfce7;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    @media (max-width: 800px) {
+      main { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 450px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .seats { gap: 6px; }
+      .panel { padding: 20px; }
+      header { padding: 20px 5%; }
+      .tagline { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Sky<span>Book</span></div>
+    <div class="tagline">Your journey begins here ✈</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h1>Book your next escape</h1>
+      <p class="subtitle">Choose your route, travel date, and favorite seat.</p>
+
+      <div class="form-grid">
+        <div>
+          <label for="from">From</label>
+          <select id="from">
+            <option>New Delhi</option>
+            <option>Mumbai</option>
+            <option>Bengaluru</option>
+            <option>Chennai</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="to">To</label>
+          <select id="to">
+            <option>Dubai</option>
+            <option>London</option>
+            <option>Singapore</option>
+            <option>New York</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="date">Departure date</label>
+          <input id="date" type="date" />
+        </div>
+
+        <div>
+          <label for="passengers">Passengers</label>
+          <select id="passengers">
+            <option value="1">1 Passenger</option>
+            <option value="2">2 Passengers</option>
+            <option value="3">3 Passengers</option>
+            <option value="4">4 Passengers</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="seat-title">
+        <strong>Select your seat</strong>
+        <small>₹4,999 per seat</small>
+      </div>
+
+      <div class="screen">FRONT OF AIRCRAFT</div>
+      <div class="seats" id="seats"></div>
+
+      <div class="legend">
+        <span><i class="dot"></i>Available</span>
+        <span><i class="dot selected"></i>Selected</span>
+        <span><i class="dot booked"></i>Booked</span>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <h2 class="summary-title">Booking summary</h2>
+
+      <div class="route">
+        <div class="city" id="fromText">New Delhi</div>
+        <div class="plane">✈</div>
+        <div class="city" id="toText">Dubai</div>
+      </div>
+
+      <div class="row"><span>Date</span><strong id="dateText">Choose a date</strong></div>
+      <div class="row"><span>Passengers</span><strong id="passengerText">1</strong></div>
+      <div class="row"><span>Selected seats</span><strong id="seatText">None</strong></div>
+      <div class="row"><span>Ticket fare</span><strong id="fareText">₹0</strong></div>
+      <div class="row"><span>Service fee</span><strong id="feeText">₹0</strong></div>
+      <div class="row total"><span>Total</span><strong id="totalText">₹0</strong></div>
+
+      <button class="book-btn" id="bookBtn" disabled>Confirm Booking</button>
+      <div id="confirmation"></div>
+    </aside>
+  </main>
+
+  <script>
+    const seatContainer = document.getElementById("seats");
+    const bookedSeats = ["A3", "A6", "B2", "B7", "C4", "D1", "D8"];
+    const selectedSeats = new Set();
+    const pricePerSeat = 4999;
+    const serviceFee = 299;
+
+    // Create seats A1 to D8
+    ["A", "B", "C", "D"].forEach(row => {
+      for (let number = 1; number <= 8; number++) {
+        const seatName = row + number;
+        const seat = document.createElement("button");
+        seat.className = "seat";
+        seat.textContent = seatName;
+
+        if (bookedSeats.includes(seatName)) {
+          seat.classList.add("booked");
+          seat.disabled = true;
+        }
+
+        seat.addEventListener("click", () => {
+          if (selectedSeats.has(seatName)) {
+            selectedSeats.delete(seatName);
+            seat.classList.remove("selected");
+          } else {
+            selectedSeats.add(seatName);
+            seat.classList.add("selected");
+          }
+          updateSummary();
+        });
+
+        seatContainer.appendChild(seat);
+      }
+    });
+
+    const from = document.getElementById("from");
+    const to = document.getElementById("to");
+    const date = document.getElementById("date");
+    const passengers = document.getElementById("passengers");
+
+    function formatMoney(amount) {
+      return "₹" + amount.toLocaleString("en-IN");
+    }
+
+    function updateSummary() {
+      document.getElementById("fromText").textContent = from.value;
+      document.getElementById("toText").textContent = to.value;
+      document.getElementById("passengerText").textContent = passengers.value;
+
+      document.getElementById("dateText").textContent =
+        date.value ? new Date(date.value + "T00:00:00").toLocaleDateString("en-IN", {
+          day: "numeric", month: "short", year: "numeric"
+        }) : "Choose a date";
+
+      const count = selectedSeats.size;
+      const fare = count * pricePerSeat;
+      const fee = count ? serviceFee : 0;
+
+      document.getElementById("seatText").textContent =
+        count ? [...selectedSeats].join(", ") : "None";
+      document.getElementById("fareText").textContent = formatMoney(fare);
+      document.getElementById("feeText").textContent = formatMoney(fee);
+      document.getElementById("totalText").textContent = formatMoney(fare + fee);
+
+      document.getElementById("bookBtn").disabled = count === 0 || !date.value;
+    }
+
+    [from, to, date, passengers].forEach(element =>
+      element.addEventListener("change", updateSummary)
+    );
+
+    document.getElementById("bookBtn").addEventListener("click", () => {
+      const confirmation = document.getElementById("confirmation");
+      confirmation.innerHTML =
+        `✓ Booking confirmed! Your seats: <b>${[...selectedSeats].join(", ")}</b>.`;
+      confirmation.style.display = "block";
+    });
+
+    // Prevent choosing a past date
+    date.min = new Date().toISOString().split("T")[0];
+    updateSummary();
+  </script>
+</body>
+</html>
